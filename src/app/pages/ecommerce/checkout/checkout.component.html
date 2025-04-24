@@ -1,0 +1,116 @@
+<div class="container-fluid">
+  <div class="checkout-tabs">
+    <div class="row">
+      <div class="col-xl-2 col-sm-3">
+        <ul ngbNav #nav="ngbNav" [activeId]="1" class="nav-pills flex-column">
+          <li [ngbNavItem]="1">
+            <h2>{{formMeta.serviceName}}</h2>
+            <img [src]="formMeta.imageUrl" style="max-width: 250px; max-height: 250px;" />
+            <ng-template ngbNavContent>
+              <div class="card">
+                <div class="card-body">
+                  <div class="tab-content" id="v-pills-tabContent">
+                    <div
+                      class="tab-pane fade show active"
+                      id="v-pills-shipping"
+                      role="tabpanel"
+                      aria-labelledby="v-pills-shipping-tab"
+                    >
+                      <div>
+                        <h4 class="card-title">
+                          {{ formMeta.shortDescription }}
+                        </h4>
+                        <p class="card-title-desc">
+                          Fill all information below
+                        </p>
+                        <form
+                          [formGroup]="productForm"
+                          (ngSubmit)="validSubmit()"
+                        >
+                          <div
+                            *ngFor="let key of formMetaFieldKeys"
+                            class="row mb-4"
+                          >
+                            <label class="col-md-2 col-form-label">
+                              {{ formMeta.fields[key].label }}
+                            </label>
+                            <div class="col-md-10">
+                              <!-- Text Input -->
+                              <input
+                                *ngIf="formMeta.fields[key].type === 'text'"
+                                [formControlName]="key"
+                                type="text"
+                                class="form-control"
+                                [placeholder]="formMeta.fields[key].placeholder"
+                              />
+
+                               <!-- number Input -->
+                               <input
+                               *ngIf="formMeta.fields[key].type === 'number'"
+                               [formControlName]="key"
+                               type="number"
+                               class="form-control"
+                               [placeholder]="formMeta.fields[key].placeholder"
+                             />
+                              <!-- number Input -->
+                              <input
+                              *ngIf="formMeta.fields[key].type === 'date'"
+                              [formControlName]="key"
+                              type="date"
+                              class="form-control"
+                              [placeholder]="formMeta.fields[key].placeholder"
+                            />
+
+
+                              <!-- Textarea -->
+                              <textarea
+                                *ngIf="formMeta.fields[key].type === 'textarea'"
+                                [formControlName]="key"
+                                class="form-control"
+                                [rows]="formMeta.fields[key].rows || 3"
+                                [placeholder]="formMeta.fields[key].placeholder"
+                              ></textarea>
+
+                              <!-- Select -->
+                              <ng-select
+                                *ngIf="formMeta.fields[key].type === 'select'"
+                                [formControlName]="key"
+                                [items]="formMeta.fields[key].options"
+                                bindLabel="label"
+                                bindValue="value"
+                                placeholder="Select"
+                              ></ng-select>
+                            </div>
+                          </div>
+
+                          <!-- Submit Button -->
+                          <div class="row my-4">
+                            <div class="col-sm-6">
+                              <div class="text-sm-end">
+                                <button type="submit" class="btn btn-success">
+                                  Submit
+                                  <i
+                                    *ngIf="loading"
+                                    class="bx bx-loader bx-spin font-size-18 align-middle me-2"
+                                  ></i>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+          </li>
+        </ul>
+      </div>
+
+      <div class="col-lg-10">
+        <div [ngbNavOutlet]="nav"></div>
+      </div>
+    </div>
+  </div>
+</div>

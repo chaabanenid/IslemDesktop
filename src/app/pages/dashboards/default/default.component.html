@@ -1,0 +1,139 @@
+<app-loader></app-loader>
+<div class="container-fluid">
+  <!-- start page title -->
+  <div class="row">
+    <div class="col-12">
+      <div
+        class="page-title-box d-flex align-items-center justify-content-between"
+      >
+        <h4 class="mb-0 font-size-18">Dashboard</h4>
+        <div class="page-title-right">
+          <ol class="breadcrumb m-0">
+            <li class="breadcrumb-item active">Welcome to Nidhal dashboard</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- end page title -->
+
+  <div class="row">
+    <div class="col-xl">
+      <div class="row">
+        <div class="col-md-3">
+          <app-stat
+            title="total Entities"
+            [value]="tranferNumbers(totalEntities?.count)"
+            [icon]="totalEntities?.icon"
+          ></app-stat>
+        </div>
+        <div class="col-md-3">
+          <app-stat
+            title="total RelationShip"
+            [value]="tranferNumbers(totalRelationShip?.count)"
+            [icon]="totalRelationShip?.icon"
+          ></app-stat>
+        </div>
+        <div class="col-md-3">
+          <app-stat
+            title="total Reports"
+            [value]="tranferNumbers(totalReports?.count)"
+            [icon]="totalReports?.icon"
+          ></app-stat>
+        </div>
+        <div class="col-md-3">
+          <app-stat
+            title="total Observable"
+            [value]="tranferNumbers(totalObservable?.count)"
+            [icon]="totalObservable?.icon"
+          ></app-stat>
+        </div>
+      </div>
+      <!-- end row -->
+
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-lg-6">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-4">OBSERVABLES DISTRIBUTION</h4>
+
+                  <div class="chartjs-chart">
+                    <!-- Radar Chart -->
+                    <canvas
+                      baseChart
+                      [datasets]="radarChart.datasets"
+                      chartType="radar"
+                      [options]="radarChart.options"
+                      height="300"
+                      [labels]="radarChart.labels"
+                    >
+                    </canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-4">TOP 10 ACTIVE ENTITIES (3 LAST MONTHS)</h4>
+                  <apx-chart
+                    class="apex-charts"
+                    dir="ltr"
+                    [series]="barChart.series"
+                    [chart]="barChart.chart"
+                    [plotOptions]="barChart.plotOptions"
+                    [dataLabels]="barChart.dataLabels"
+                    [xaxis]="barChart.xaxis"
+                    [colors]="barChart.colors"
+                    [grid]="barChart.grid"
+                  ></apx-chart>
+                </div>
+              </div>
+              <!--end card-->
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-4">INGESTED ENTITIES</h4>
+
+                  <div class="chartjs-chart">
+                    <!-- Line Chart -->
+                    <canvas
+                      baseChart
+                      height="300"
+                      [datasets]="lineAreaChart.datasets"
+                      [labels]="lineAreaChart.labels"
+                      [options]="lineAreaChart.options"
+                      chartType="line"
+                    >
+                    </canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- end row -->
+
+   <div class="row">
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title mb-4">LAST INGESTED REPORTS (CREATION DATE IN THE PLATFORM)</h4>
+          <app-transaction [threats]="threats"></app-transaction>
+         
+        </div>
+      </div>
+    </div>
+  </div> 
+</div>
+<!-- container-fluid -->
+
