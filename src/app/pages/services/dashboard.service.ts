@@ -24,7 +24,7 @@ export class DashboardService {
       `http://localhost:8081/api/reclamation/getTotalEntities`
     );
   }
-  getTotalRelationShip(): Observable<any> {
+  getTotalRelationPaySheet(): Observable<any> {
     const body = {
       id: "DashboardStixCoreRelationshipsNumberQuery",
       query:
@@ -36,10 +36,10 @@ export class DashboardService {
     };
 
     return this.http.get<any>(
-      `http://localhost:8081/api/reclamation/getTotalRelationShip`
+      `http://localhost:8081/api/paySheet/getcount`
     );
   }
-  getTotalReports(): Observable<any> {
+  getTotalLeaveRequests(): Observable<any> {
     const body = {
       id: "DashboardStixDomainObjectsNumberQuery",
       query:
@@ -51,14 +51,12 @@ export class DashboardService {
     };
 
     return this.http.get<any>(
-      `http://localhost:8081/api/reclamation/getTotalReports`
+      `http://localhost:8081/api/leaveRequest/getcount`
     );
   }
-  getTotalObservable(): Observable<any> {
- 
-    
+  getTotalIncident(): Observable<any> {
     return this.http.get<any>(
-      `http://localhost:8081/api/reclamation/getTotalObservable`
+      `http://localhost:8081/api/incident/getcount`
     );
   }
   BarChartData(): Observable<any> {
@@ -68,16 +66,16 @@ export class DashboardService {
     );
   }
 
-  radarChartData(): Observable<any> {
+  radarChartDataByCategory(): Observable<any> {
  
     return this.http.get<any>(
-      `http://localhost:8081/api/reclamation/radarChartData`
+      `http://localhost:8081/api/incident/category-distribution`
     );
   }
-  lineChartData(): Observable<any> {
+  lineChartData(type: string): Observable<any> {
  
     return this.http.get<any>(
-      `http://localhost:8081/api/reclamation/lineChartData`
+      `http://localhost:8081/api/reclamation/timeDistribution/${type}`
     );
   }
   threadReport(): Observable<any> {

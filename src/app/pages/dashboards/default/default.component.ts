@@ -9,6 +9,7 @@ import { ConfigService } from "../../../core/services/config.service";
 import { ChartType } from "../../chart/apex/apex.model";
 import { barChart, lineAreaChart, lineBarChart } from "../../chart/apex/data";
 import { DashboardService } from "../../services/dashboard.service";
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: "app-default",
@@ -26,13 +27,14 @@ export class DefaultComponent implements OnInit {
   statData: Array<[]>;
 
   isActive: string;
-  totalEntities;
-  totalRelationShip;
-  totalReports;
-  totalObservable;
+  totalEntities:any = {};
+  totalIncidents: any = {};
+  totalLeaveRequest: any = {};
+  totalPaySheet: any = {};
   lineAreaChart;
   lineBarChart;
   threats;
+  selectedCategory = 'incident'; 
 
   @ViewChild("content") content;
   constructor(
@@ -41,7 +43,7 @@ export class DefaultComponent implements OnInit {
     private eventService: EventService,
 
     private dashbordService: DashboardService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.breadCrumbItems = [
@@ -77,7 +79,7 @@ export class DefaultComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-  
+
   }
 
   /**
@@ -87,10 +89,10 @@ export class DefaultComponent implements OnInit {
     this.emailSentBarChart = emailSentBarChart;
     this.getRadarChartData();
     this.radarChart = radarChart;
-    this.getBarChartData();
+   
     this.lineAreaChart = lineAreaChart;
     this.lineBarChart = lineBarChart;
-    this.getLineChart();
+    this.getLineChart('incident');
     this.getThreadsReport();
 
     this.barChart = barChart;
@@ -101,44 +103,58 @@ export class DefaultComponent implements OnInit {
       this.transactions = data.transactions;
       this.statData = data.statData;
     });
-    this.dashbordService.getTotalEntities().subscribe((data) => {
-      this.totalEntities = data.data.stixDomainObjectsNumber;
-      this.totalEntities.icon = "bx bx-data";
+
+    // this.dashbordService.getTotalEntities().subscribe((data) => {
+
+    //   this.totalEntities = data.data.stixDomainObjectsNumber;
+    //   this.totalEntities.icon = "bx bx-data";
+    // });
+    forkJoin({
+      incidents: this.dashbordService.getTotalIncident(),
+      leaveRequests: this.dashbordService.getTotalLeaveRequests(),
+      paySheets: this.dashbordService.getTotalRelationPaySheet(),
+    }).subscribe(({ incidents, leaveRequests, paySheets }) => {
+      this.totalIncidents.count = incidents.total;
+      this.totalIncidents.icon = 'bx bx-git-branch';
+
+      this.totalLeaveRequest.count = leaveRequests.total;
+      this.totalLeaveRequest.icon = 'bx bx-file';
+
+      this.totalPaySheet.count = paySheets.total;
+      this.totalPaySheet.icon = 'bx bx-show';
+
+      console.log("hello"+this.totalIncidents.count)
+
+      this.totalEntities.count =
+        this.totalIncidents.count +
+        this.totalLeaveRequest.count +
+        this.totalPaySheet.count;
+      this.totalEntities.icon = 'bx bx-data';
+
+      this.getBarChartData();
     });
-    this.dashbordService.getTotalRelationShip().subscribe((data) => {
-      this.totalRelationShip = data.data.stixCoreRelationshipsNumber;
-      this.totalRelationShip.icon = "bx bx-git-branch";
-    });
-    this.dashbordService.getTotalReports().subscribe((data) => {
-      this.totalReports = data.data.stixDomainObjectsNumber;
-      this.totalReports.icon = "bx bx-file";
-    });
-    this.dashbordService.getTotalObservable().subscribe((data) => {
-      console.log("dataaaaaaaaaa", data);
-      this.totalObservable = data.data.stixCyberObservablesNumber;
-      this.totalObservable.icon = "bx bx-show";
-    });
+
   }
   getBarChartData() {
     const value = [];
-    const names = [];
-    this.dashbordService.BarChartData().subscribe((res) => {
-      res.data.stixCoreRelationshipsDistribution.map((r) => {
-        value.push(r.value);
-        names.push(r.entity.name);
-      });
+    const names = ['Incidents', 'Leave Requests', 'Pay Sheets']
+
       barChart.series = [
         {
-          data: value,
+          name: 'Total Records',
+          data: [this.totalIncidents.count,this.totalLeaveRequest.count,this.totalPaySheet.count],
         },
       ];
       barChart.xaxis = {
         categories: names,
       };
-    });
+   
   }
   getRadarChartData() {
+    console.log("helooooooooooooo")
     const data = [];
+    const labels: string[] = [];
+    const values: number[] = [];
     const colors = [
       "rgb(239, 83, 80)",
       "rgb(236, 64, 122)",
@@ -147,72 +163,89 @@ export class DefaultComponent implements OnInit {
       "rgb(92, 107, 192)",
       "rgb(66, 165, 245)",
     ];
-    this.dashbordService.radarChartData().subscribe((res) => {
-      for (
-        let i = 0;
-        i < res.data.stixCyberObservablesDistribution.length;
-        i++
-      ) {
-        const val = res.data.stixCyberObservablesDistribution[i];
-        const tab = [];
-        for (
-          let j = 0;
-          j < res.data.stixCyberObservablesDistribution.length;
-          j++
-        ) {
-          tab[j] = 0;
-        }
-        tab[i] = val.value;
-        tab[i + 1] = val.value;
+  
+    this.dashbordService.radarChartDataByCategory().subscribe((res) => {
+      console.log("ressssssss",res)
 
-        data.push({ data: tab, label: val.label });
-      }
-      radarChart.datasets = [];
-      for (let i = 0; i < data.length; i++) {
-        radarChart.datasets.push({
-          ...data[i],
-          backgroundColor: "rgb(251, 210, 209)",
-          borderColor: colors[i],
-          pointBackgroundColor: colors[i],
-          pointBorderColor: "#fff",
-          pointHoverBackgroundColor: "#fff",
-        });
-      }
+      const categories = res.data;
+  
+      labels.push(...categories.map((c) => c._id || 'Unknown'));
+      values.push(...categories.map((c) => c.count));
+  
+      this.radarChart.labels = labels;
+      this.radarChart.datasets = [{
+        label: "Incidents by Category",
+        data: values,
+        backgroundColor: "rgba(92, 107, 192, 0.3)",
+        borderColor: "rgb(92, 107, 192)",
+        pointBackgroundColor: "rgb(171, 71, 188)",
+        pointBorderColor: "#fff",
+        pointHoverBackgroundColor: "#fff",
+      }];
     });
   }
-  getLineChart() {
-    const labels = [];
-    const value = [];
-
-    this.dashbordService.lineChartData().subscribe((res) => {
-      res.data.stixDomainObjectsTimeSeries.map((r) => {
-        value.push(r.value);
-        labels.push(r.date.substring(0, 8));
+  
+  getLineChart(category: string) {
+    const labels: string[] = [];
+    const values: number[] = [];
+  
+    this.dashbordService.lineChartData(category).subscribe((res) => {
+      const sortedData = res.data.sort((a, b) => a.date.localeCompare(b.date));
+  
+      sortedData.forEach((r) => {
+        labels.push(r.date); // e.g., "2025-05-02T13"
+        values.push(r.value);
       });
-      lineAreaChart.labels = labels;
-      lineAreaChart.datasets.push({
-        label: "data",
-        fill: true,
-        lineTension: 0.5,
-        backgroundColor: "rgba(85, 110, 230, 0.2)",
-        borderColor: "#556ee6",
-        borderCapStyle: "butt",
-        borderDash: [],
-        borderDashOffset: 0.0,
-        borderJoinStyle: "miter",
-        pointBorderColor: "#556ee6",
-        pointBackgroundColor: "#fff",
-        pointBorderWidth: 1,
-        pointHoverRadius: 5,
-        pointHoverBackgroundColor: "#556ee6",
-        pointHoverBorderColor: "#fff",
-        pointHoverBorderWidth: 2,
-        pointRadius: 1,
-        pointHitRadius: 10,
-        data: value,
-      });
+  
+      this.lineAreaChart = {
+        labels: labels,
+        datasets: [
+          {
+            label: `${category} activity by hour`,
+            fill: true,
+            lineTension: 0.1,
+            backgroundColor: "rgba(85, 110, 230, 0.2)",
+            borderColor: "#556ee6",
+            pointBorderColor: "#556ee6",
+            pointBackgroundColor: "#fff",
+            data: values,
+          }
+        ],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function (value: number) {
+                  return value.toLocaleString(); // e.g., 1,000 instead of 1000
+                },
+              },
+            },
+            x: {
+              ticks: {
+                autoSkip: true,
+                maxTicksLimit: 12,
+              },
+            },
+          },
+        },
+      };
     });
   }
+  
+  onCategoryChange() {
+    this.getLineChart(this.selectedCategory);
+  }
+  
+  
   getThreadsReport() {
     this.dashbordService.threadReport().subscribe((res) => {
       console.log("threts", res);
@@ -230,8 +263,8 @@ export class DefaultComponent implements OnInit {
     numb >= 1000000
       ? (res = Math.round((numb / 1000000) * 100) / 100 + "M")
       : numb >= 1000
-      ? (res = Math.round((numb / 1000) * 100) / 100 + "K")
-      : (res = numb);
+        ? (res = Math.round((numb / 1000) * 100) / 100 + "K")
+        : (res = numb);
     return res;
   }
 

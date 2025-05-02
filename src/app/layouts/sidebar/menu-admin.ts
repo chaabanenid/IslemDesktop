@@ -53,9 +53,21 @@ export const MENUADMIN: MenuItem[] = [
 
             {
                 id: 19,
-                label: 'Complaint list',
-                link: '/report/list',
+                label: 'Incidents list',
+                link: '/report/list/incident',
                 parentId: 12
+            },
+            {
+              id: 19,
+              label: "Human Resources Demandes",
+              link: "/report/list/humanresources",
+              parentId: 12,
+            },
+            {
+              id: 19,
+              label:  "Fiche de paie List",
+              link: "/report/list/ficheDePaie",
+              parentId: 12,
             },
 
         ]

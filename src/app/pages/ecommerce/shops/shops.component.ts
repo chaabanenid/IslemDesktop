@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
-import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { FormBuilder, FormControl, FormGroup, Validators } from "@angular/forms";
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 
 import Swal from "sweetalert2";
@@ -23,37 +23,17 @@ export class ShopsComponent implements OnInit {
   breadCrumbItems: Array<{}>;
 
   shopsData: Shops[];
-  status=['Progress','Accepted','refused']
+  status = ['Progress', 'Accepted', 'refused']
   stateValue = ["None", "Low", "Moderate", "Good", "Strong"];
   selection;
   filteredShopsData;
   formType;
-  selectValue = [
-    "adware",
-    "backdoor",
-    "bot",
-    "boot kit",
-    "ddos",
-    "downoader",
-    "dropper",
-    "exploit-kit",
-    "keylogger",
-    "ransomware",
-    "remote-access-trojen",
-    "resource-exploitation",
-    "rogue-security-software",
-    "root-kit",
-    "screen-capture",
-    "spyware",
-    "trojan",
-    "Undefined",
-    "virus",
-    "webshell",
-    "wiper",
-    "worm",
-  ];
-  
-  constructor(private http: HttpClient, private modalService: NgbModal, private formBuilder: FormBuilder,private route: ActivatedRoute) { }
+
+  apimap = { incident: "incident", humanresources: "leaveRequest", ficheDePaie: "paySheet" };
+  apiBackEnd;
+
+
+  constructor(private http: HttpClient, private modalService: NgbModal, private formBuilder: FormBuilder, private route: ActivatedRoute) { }
   formData: FormGroup;
   submitted = false;
   role;
@@ -61,6 +41,7 @@ export class ShopsComponent implements OnInit {
     this.route.paramMap.subscribe((params) => {
       this.formType = params.get('type');
     });
+    this.apiBackEnd = this.apimap[this.formType];
     var values = JSON.parse(localStorage.getItem("currentUser"));
     console.log("local", values.role)
     this.role = values.role
@@ -73,9 +54,9 @@ export class ShopsComponent implements OnInit {
     this.formData = this.formBuilder.group({
       name: ["", [Validators.required,]],
       description: [
-        "",[Validators.required]
+        "", [Validators.required]
       ],
-      type: ["", [Validators.required, ]],
+      type: ["", [Validators.required,]],
       confidence: ["", [Validators.required]],
       author: ["", [Validators.required]],
       references: ["", [Validators.required]],
@@ -85,10 +66,18 @@ export class ShopsComponent implements OnInit {
      * fetches data
      */
     this._fetchData();
-     this.route.params.subscribe(params => {
+    this.route.params.subscribe(params => {
+      this.apiBackEnd = this.apimap[this.formType];
       // Check if specific parameters have changed
       this._fetchData(); // Fetch new data when parameters change
     });
+  }
+  buildForm(data: any) {
+    const group: any = {};
+    for (const key of Object.keys(data)) {
+      group[key] = new FormControl(data[key], Validators.required);
+    }
+    this.formData = this.formBuilder.group(group);
   }
   get form() {
     return this.formData.controls;
@@ -113,16 +102,9 @@ export class ShopsComponent implements OnInit {
   }
 
 
-  openModal(content: any, data) {
-    console.log(data)
-
-    this.formData.setValue({
-      author: data.author, description: data.description,
-      _id: data._id,
-      confidence: data.confidence, name: data.name, references: data.references, type: data.type
-
-    })
-    this.modalService.open(content);
+  openModal(content: any, data: any) {
+    this.buildForm(data);
+    this.modalService.open(content); // or whatever modal method you use
   }
 
   /**
@@ -131,13 +113,9 @@ export class ShopsComponent implements OnInit {
   private _fetchData() {
     if (this.role !== 'admin') {
       var values = JSON.parse(localStorage.getItem("currentUser"));
-      const apimap={incident:"incident",humanresources:"leaveRequest",ficheDePaie:"paySheet"};
-      const apiBackEnd=apimap[this.formType]
       this.http
-        .get<any>(`http://localhost:8081/api/${apiBackEnd}/getById/` + values._id)
+        .get<any>(`http://localhost:8081/api/${this.apiBackEnd}/getById/` + values._id)
         .subscribe((data) => {
-          console.log("dataaaaaa",data)
-
           this.shopsData = data.rec;
           this.filterData();
         })
@@ -146,32 +124,31 @@ export class ShopsComponent implements OnInit {
     }
     else
       this.http
-        .get<any>(`http://localhost:8081/api/reclamation/getAll`)
+        .get<any>(`http://localhost:8081/api/${this.apiBackEnd}/getAll`)
         .subscribe((data) => {
-      
           this.shopsData = data.users;
+          this.filterData();
         })
-       
+
         ;
   }
-  deleteReclamation(id) {
+  deleteRecord(id) {
     this.http
-      .delete<any>(`http://localhost:8081/api/reclamation/delete/` + id)
+      .delete<any>(`http://localhost:8081/api/${this.apiBackEnd}/delete/` + id)
       .subscribe((data) => {
-    
-       this._fetchData();
-       this.position()
+
+        this._fetchData();
+        this.position()
       }),
-      (error)=>this.positionError()
+      (error) => this.positionError()
       ;
 
   }
   saveCustomer() {
     if (this.formData.valid) {
-      console.log("id", this.formData.value._id)
       let id = this.formData.value._id
       this.http
-        .patch<any>(`http://localhost:8081/api/reclamation/update/` + id, {
+        .patch<any>(`http://localhost:8081/api/${this.apiBackEnd}/update/` + id, {
           ...this.formData.value,
         })
         .subscribe((data) => {
@@ -187,8 +164,8 @@ export class ShopsComponent implements OnInit {
           this._fetchData()
           return data;
         }),
-        (err)=>this.positionError();
-        ;
+        (err) => this.positionError();
+      ;
 
 
 
@@ -199,50 +176,50 @@ export class ShopsComponent implements OnInit {
 
 
   updateStatus(id) {
-      this.http
-        .patch<any>(`http://localhost:8081/api/reclamation/update/` + id, {
-         status:this.selection
-        })
-        .subscribe((data) => {
-          Swal.fire({
-            position: 'center',
-            icon: 'success',
-            title: 'status has been changed',
-            showConfirmButton: false,
-            timer: 1000,
-          });
-          this._fetchData();
-          this.modalService.dismissAll();
-        }),
-        (err)=>this.positionError();
-        
+    this.http
+      .patch<any>(`http://localhost:8081/api/${this.apiBackEnd}/update/` + id, {
+        status: this.selection
+      })
+      .subscribe((data) => {
+        Swal.fire({
+          position: 'center',
+          icon: 'success',
+          title: 'status has been changed',
+          showConfirmButton: false,
+          timer: 1000,
+        });
+        this._fetchData();
+        this.modalService.dismissAll();
+      }),
+      (err) => this.positionError();
 
-
-
-      
-    
 
   }
+
   filterData(): void {
-    const excludedKeys = ['_id', '__v', 'userId',];  // Keys to be excluded
+    const excludedKeys = ['__v', 'userId',];
 
-    // Filter the array of objects
-    this.filteredShopsData = this.shopsData.map(shop => {
-      // For each object, filter out the unwanted keys
-      return Object.keys(shop)
-        .filter(key => !excludedKeys.includes(key))  // Exclude unwanted keys
-        .reduce((obj, key) => {
-          obj[key] = shop[key];  // Create a new object with the remaining keys and values
-          return obj;
-        }, {});
-    });
+    if (this.role == 'admin') {
+      this.filteredShopsData = this.shopsData;
+    }
+    else {
+      this.filteredShopsData = this.shopsData.map(shop => {
+
+        return Object.keys(shop)
+          .filter(key => !excludedKeys.includes(key))
+          .reduce((obj, key) => {
+            obj[key] = shop[key];
+            return obj;
+          }, {});
+      });
+    }
   }
 
- 
+
   changeFn(val) {
-    this.selection=val;
+    this.selection = val;
     console.log("Dropdown selection:", val);
-}
+  }
 
 
 }
